@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dear Yu Flower 友熙花苑・AI 文案大腦</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --rose:#8C6259; --rose-lt:#C29B91; --cream:#FDFBF7;
+  --petal:#F5EDE8; --border:#EDE5DF; --ink:#3D2B26;
+  --muted:#9C857E; --gold:#B8995A;
+}
+body { font-family:'Noto Serif TC',serif; background:var(--cream); color:var(--ink); min-height:100vh; display:flex; flex-direction:column; }
+
+/* HEADER */
+header { background:linear-gradient(135deg,#3D2B26 0%,#5C3D36 60%,#7A5048 100%); padding:28px 24px 22px; text-align:center; position:relative; overflow:hidden; }
+header::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 70% 50%,rgba(184,153,90,.15) 0%,transparent 70%); pointer-events:none; }
+.header-en { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.8rem; color:var(--gold); letter-spacing:.12em; }
+.header-zh { font-size:.68rem; color:rgba(255,255,255,.45); letter-spacing:.35em; margin-top:5px; text-transform:uppercase; }
+.header-tag { font-size:.7rem; color:rgba(255,255,255,.3); margin-top:9px; letter-spacing:.07em; font-weight:300; }
+
+/* CONTAINER */
+.wrap { max-width:1100px; margin:0 auto; padding:20px 16px 40px; flex:1; display:flex; flex-direction:column; gap:15px; }
+
+/* CARD */
+.card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:18px 20px; }
+.card-label { font-size:.62rem; letter-spacing:.28em; color:var(--rose); text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:7px; }
+.card-label::before { content:''; width:18px; height:1px; background:var(--rose-lt); flex-shrink:0; }
+
+/* API ROW */
+.api-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.api-wrap { flex:1; min-width:200px; position:relative; }
+.api-wrap input { width:100%; border:1px solid var(--border); border-radius:10px; padding:10px 78px 10px 14px; font-size:.8rem; font-family:monospace; color:var(--ink); background:var(--cream); outline:none; transition:border-color .2s; }
+.api-wrap input:focus { border-color:var(--rose); }
+.api-wrap input::placeholder { font-family:'Noto Serif TC',serif; color:#ccc; letter-spacing:0; font-size:.75rem; }
+.api-eye { position:absolute; right:36px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:.82rem; color:var(--muted); padding:3px; }
+.api-eye:hover { color:var(--rose); }
+.api-x { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:.75rem; color:#ccc; padding:3px; }
+.api-x:hover { color:#e57373; }
+.api-hint { font-size:.65rem; color:var(--muted); }
+.api-hint a { color:var(--rose); text-decoration:none; }
+.api-hint a:hover { text-decoration:underline; }
+
+/* TOPIC GRID */
+.topic-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media(max-width:480px){ .topic-grid{grid-template-columns:1fr;} }
+.topic-btn { border:1px solid var(--border); border-radius:12px; padding:14px 16px; background:var(--petal); cursor:pointer; text-align:left; transition:all .22s; display:flex; flex-direction:column; gap:4px; }
+.topic-btn:hover { border-color:var(--rose-lt); background:#f0e4df; transform:translateY(-1px); box-shadow:0 4px 14px rgba(140,98,89,.12); }
+.topic-btn.active { border-color:var(--rose); background:var(--rose); color:#fff; box-shadow:0 6px 20px rgba(140,98,89,.3); }
+.topic-btn.active .t-sub { color:rgba(255,255,255,.6); }
+.t-icon { font-size:1.1rem; }
+.t-main { font-size:.82rem; font-weight:500; letter-spacing:.06em; }
+.t-sub  { font-size:.65rem; color:var(--muted); letter-spacing:.04em; }
+
+/* GEN BTN */
+.gen-btn { width:100%; background:linear-gradient(135deg,var(--rose) 0%,#6B453E 100%); color:#fff; border:none; border-radius:12px; padding:15px; font-family:'Noto Serif TC',serif; font-size:.82rem; letter-spacing:.25em; cursor:pointer; transition:opacity .2s,transform .1s; display:flex; align-items:center; justify-content:center; gap:8px; }
+.gen-btn:hover { opacity:.9; }
+.gen-btn:active { transform:scale(.99); }
+.gen-btn:disabled { opacity:.5; cursor:not-allowed; }
+.spin { display:inline-block; animation:spin .9s linear infinite; }
+@keyframes spin{ to{transform:rotate(360deg);} }
+
+/* LINK ROW */
+.link-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.link-label { font-size:.62rem; color:var(--muted); letter-spacing:.14em; }
+.plink { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:8px; font-size:.7rem; letter-spacing:.05em; text-decoration:none; font-weight:500; transition:all .2s; }
+.plink:hover { opacity:.82; transform:translateY(-1px); }
+.plink.fb { background:#1877F2; color:#fff; }
+.plink.ig { background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); color:#fff; }
+.plink.th { background:#111; color:#fff; }
+
+/* OUTPUT */
+.out-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+@media(max-width:680px){ .out-grid{grid-template-columns:1fr;} }
+.out-col { display:flex; flex-direction:column; }
+.out-head { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:12px 12px 0 0; border:1px solid var(--border); border-bottom:none; }
+.out-head.fb-h { background:#EEF4FF; }
+.out-head.ig-h { background:#FFF0F5; }
+.out-head.th-h { background:#F3F3F3; }
+.out-plat { font-size:.68rem; font-weight:500; letter-spacing:.1em; display:flex; align-items:center; gap:5px; }
+.out-plat.fb { color:#1877F2; }
+.out-plat.ig { color:#C13584; }
+.out-plat.th { color:#111; }
+.copy-btn { font-size:.62rem; letter-spacing:.1em; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:#fff; cursor:pointer; color:var(--muted); transition:all .2s; }
+.copy-btn:hover { border-color:var(--rose); color:var(--rose); }
+.copy-btn.ok { background:#22c55e; color:#fff; border-color:#22c55e; }
+.out-body { border:1px solid var(--border); border-top:none; border-radius:0 0 12px 12px; background:#fff; padding:14px; min-height:260px; flex:1; }
+.out-text { font-size:.78rem; line-height:1.9; color:#555; white-space:pre-wrap; word-break:break-word; }
+.out-ph { font-size:.72rem; color:#ccc; letter-spacing:.06em; text-align:center; margin-top:60px; }
+
+/* SHIMMER */
+.shimmer { background:linear-gradient(90deg,#f0e9e6 25%,#f8f3f1 50%,#f0e9e6 75%); background-size:200% 100%; animation:shim 1.4s infinite; border-radius:6px; height:12px; margin-bottom:9px; }
+@keyframes shim{ to{background-position:-200% 0;} }
+
+/* TOAST */
+#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(14px); background:var(--ink); color:#fff; padding:9px 22px; border-radius:999px; font-size:.72rem; letter-spacing:.1em; opacity:0; transition:all .3s; pointer-events:none; z-index:999; }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+footer { text-align:center; padding:16px; font-size:.6rem; color:#ccc; letter-spacing:.2em; border-top:1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-en">Dear Yu Flower</div>
+  <div class="header-zh">友熙花苑・AI 文案大腦</div>
+  <div class="header-tag">鈔票花束 ‧ 純手工排單 ‧ 浪漫實用兼得的頂級花藝禮品</div>
+</header>
+
+<div class="wrap">
+
+  <!-- API KEY -->
+  <div class="card">
+    <div class="card-label">🔑 Gemini API Key</div>
+    <div class="api-row">
+      <div class="api-wrap">
+        <input type="password" id="apiKey" placeholder="AIzaSy... 貼上您的 Gemini API Key">
+        <button class="api-eye" onclick="toggleKey()">👁</button>
+        <button class="api-x" onclick="document.getElementById('apiKey').value=''">✕</button>
+      </div>
+      <span class="api-hint">沒有金鑰？<a href="https://aistudio.google.com/app/apikey" target="_blank">點此免費申請</a>（每天 1,500 次免費）</span>
+    </div>
+  </div>
+
+  <!-- TOPIC BUTTONS -->
+  <div class="card">
+    <div class="card-label">🚀 選擇主題・一鍵生成三平台文案</div>
+    <div class="topic-grid">
+      <button class="topic-btn" onclick="selectTopic('god', this)">
+        <span class="t-icon">🏮</span>
+        <span class="t-main">敬神有錢花</span>
+        <span class="t-sub">開市拜拜・神明桌上最有誠意的供品</span>
+      </button>
+      <button class="topic-btn" onclick="selectTopic('wife', this)">
+        <span class="t-icon">💕</span>
+        <span class="t-main">寵妻故事</span>
+        <span class="t-sub">別人老公送花，我老公送有錢花</span>
+      </button>
+      <button class="topic-btn" onclick="selectTopic('propose', this)">
+        <span class="t-icon">💍</span>
+        <span class="t-main">浪漫告白求婚</span>
+        <span class="t-sub">底氣十足的幽默霸氣</span>
+      </button>
+      <button class="topic-btn" onclick="selectTopic('bday', this)">
+        <span class="t-icon">🎂</span>
+        <span class="t-main">生日驚喜</span>
+        <span class="t-sub">讓全場側目的 IG 爆款禮</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- GEN BTN -->
+  <button class="gen-btn" id="genBtn" onclick="triggerGenerate()">
+    <span id="genIcon">✦</span>
+    <span id="genLabel">選擇上方主題開始生成</span>
+  </button>
+
+  <!-- PLATFORM LINKS -->
+  <div class="card" style="padding:13px 18px;">
+    <div class="link-row">
+      <span class="link-label">📲 直接發文</span>
+      <a class="plink fb" href="https://www.facebook.com/" target="_blank">f &nbsp;FB</a>
+      <a class="plink ig" href="https://www.instagram.com/" target="_blank">📷 IG</a>
+      <a class="plink th" href="https://www.threads.net/" target="_blank">@ Threads</a>
+      <span class="link-label" style="margin-left:4px;">複製文案 → 點平台 → 貼上發文</span>
+    </div>
+  </div>
+
+  <!-- OUTPUT COLUMNS -->
+  <div class="out-grid">
+    <div class="out-col">
+      <div class="out-head fb-h">
+        <span class="out-plat fb">f &nbsp;Facebook 深度版</span>
+        <button class="copy-btn" id="copyFb" onclick="copyCol('fb')">複製</button>
+      </div>
+      <div class="out-body">
+        <div id="fbContent"><div class="out-ph">點擊左側按鈕開始生成...</div></div>
+      </div>
+    </div>
+    <div class="out-col">
+      <div class="out-head ig-h">
+        <span class="out-plat ig">📷 Instagram 視覺版</span>
+        <button class="copy-btn" id="copyIg" onclick="copyCol('ig')">複製</button>
+      </div>
+      <div class="out-body">
+        <div id="igContent"><div class="out-ph">點擊左側按鈕開始生成...</div></div>
+      </div>
+    </div>
+    <div class="out-col">
+      <div class="out-head th-h">
+        <span class="out-plat th">@ Threads 觀點版</span>
+        <button class="copy-btn" id="copyTh" onclick="copyCol('th')">複製</button>
+      </div>
+      <div class="out-body">
+        <div id="thContent"><div class="out-ph">點擊左側按鈕開始生成...</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<footer>DEAR YU FLOWER ‧ 友熙花苑 AI 文案系統 © 2026</footer>
+<div id="toast"></div>
+
+<script>
+var currentTopic = null;
+var isLoading = false;
+
+// 主題設定 - 用普通字串避免template literal衝突
+var topics = {
+  god:     { label: '敬神有錢花',   desc: '開市拜拜、神明桌供品、年節祭祀，用真鈔排成的花束敬神明，誠意滿滿又討喜' },
+  wife:    { label: '寵妻故事',     desc: '別人老公送會枯萎的玫瑰，我老公送有錢花，讓老婆在閨蜜圈贏麻了的尊榮感' },
+  propose: { label: '浪漫告白求婚', desc: '帶著鈔票花束告白求婚，霸氣展現我準備好了讓你有錢花一輩子的底氣' },
+  bday:    { label: '生日驚喜',     desc: '讓壽星在現場驚呼、讓全場側目、讓照片在IG衝破讚數，最難忘的生日禮物' }
+};
+
+// 各主題的專屬補充指令 - 用普通字串
+var topicExtra = {
+  god: '【敬神有錢花特別說明】\n台灣民俗中用真鈔供神是最高誠意。「友熙」諧音「有錢」，放上神明桌是在跟神明說：我誠心獻上，請保佑財源廣進。\n文案要融合台灣在地宗教文化溫度，既虔誠又幽默。可用場景：開市大吉、農曆年節、土地公生日、關聖帝君聖誕。\n加上 hashtag：#開市大吉 #敬神有錢花 #財運旺旺來',
+  wife: '【寵妻故事特別說明】\n核心爽點：別人老公送三天就枯的玫瑰，我老公送有錢花，花不枯錢還能花。\n讓老婆截圖傳閨蜜、讓閨蜜看完去敲自己老公的那種文案。\n加上 hashtag：#寵妻日常 #神隊友認證 #有錢花比玫瑰實際',
+  propose: '【浪漫告白求婚特別說明】\n帶鈔票花束去告白求婚，這是「我為我們的未來準備好了」的霸氣宣示。\n幽默切入：別人求婚送鑽戒，我直接讓妳看到誠意有多少張。\n加上 hashtag：#求婚必備 #告白神器 #讓她說不出拒絕的理由',
+  bday: '【生日驚喜特別說明】\n壽星收到鈔票花束，當場驚呼，全場側目，拍完馬上上傳，讚數狂衝。\n這不只是禮物，是製造「今天主角是我」的道具。\n加上 hashtag：#生日快樂 #最難忘的生日禮物 #壽星本人已驚呼'
+};
+
+// 品牌基礎Prompt - 普通字串
+var brandDNA = '你是「Dear Yu Flower 友熙花苑」的品牌文案專家。\n\n' +
+  '【品牌核心情緒】\n' +
+  '幽默霸氣路線。不是煽情，不是溫情喊話。\n' +
+  '核心金句精神：「別人的老公送花，我的老公送有錢花。」\n' +
+  '讓收到花束的人產生「我比別人更被重視」的尊榮感。\n\n' +
+  '【品牌人格】\n' +
+  '時尚、走在潮流尖端的「美學顧問」。\n' +
+  '說話有品味有格調，但帶著「懂得玩」的高級幽默感。\n' +
+  '像是 Vogue 封面搭配一個會說笑的 IG 達人。\n\n' +
+  '【產品最強賣點】\n' +
+  '手工精緻度是靈魂：每張真鈔不折損、不留痕跡，包裝細節完美。\n' +
+  '不是塞錢的便宜感，而是「每張鈔票都被好好對待」的高端訂製感。\n\n' +
+  '【絕對禁止】\n' +
+  '嚴肅死板像教科書的語氣，說教式長段落大道理。\n' +
+  '要幽默有梗但保有質感，讓人看完想轉發或標記朋友。\n\n';
+
+function toggleKey() {
+  var i = document.getElementById('apiKey');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+
+function setLoading(on) {
+  isLoading = on;
+  var btn = document.getElementById('genBtn');
+  btn.disabled = on;
+  document.getElementById('genIcon').innerHTML = on ? '<span class="spin">↻</span>' : '✦';
+  document.getElementById('genLabel').textContent = on
+    ? 'AI 正在生成三平台文案...'
+    : (currentTopic ? '重新生成「' + topics[currentTopic].label + '」文案' : '選擇上方主題開始生成');
+}
+
+function shimmer(id) {
+  document.getElementById(id).innerHTML =
+    '<div class="shimmer" style="width:88%"></div>' +
+    '<div class="shimmer" style="width:72%"></div>' +
+    '<div class="shimmer" style="width:82%"></div>' +
+    '<div class="shimmer" style="width:60%"></div>' +
+    '<div class="shimmer" style="width:78%"></div>' +
+    '<div class="shimmer" style="width:65%"></div>';
+}
+
+function typewrite(id, text) {
+  var el = document.getElementById(id);
+  el.innerHTML = '<div class="out-text"></div>';
+  var textEl = el.querySelector('.out-text');
+  var i = 0;
+  function next() {
+    if (i < text.length) {
+      textEl.textContent += text[i++];
+      if (i % 5 === 0) { requestAnimationFrame(next); } else { setTimeout(next, 5); }
+    }
+  }
+  next();
+}
+
+function selectTopic(topic, btn) {
+  currentTopic = topic;
+  document.querySelectorAll('.topic-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('genLabel').textContent = '生成「' + topics[topic].label + '」三平台文案';
+  document.getElementById('genIcon').textContent = '✦';
+  document.getElementById('genBtn').disabled = false;
+}
+
+function triggerGenerate() {
+  if (isLoading) return;
+  if (!currentTopic) { showToast('⚠️ 請先選擇一個主題'); return; }
+  var key = document.getElementById('apiKey').value.trim();
+  if (!key) { showToast('⚠️ 請填入 Gemini API Key'); document.getElementById('apiKey').focus(); return; }
+  doGenerate(key, currentTopic);
+}
+
+async function doGenerate(apiKey, topic) {
+  setLoading(true);
+  ['fbContent', 'igContent', 'thContent'].forEach(shimmer);
+
+  var t = topics[topic];
+  var extra = topicExtra[topic] || '';
+
+  var userPrompt = brandDNA +
+    extra + '\n\n' +
+    '---\n' +
+    '現在根據主題：【' + t.label + '】— ' + t.desc + '\n\n' +
+    '請分別產出三個平台完整貼文，缺一不可：\n\n' +
+    'Facebook 深度版：420~550字，幽默霸氣基調帶入場景故事，結尾引導私訊詢問客製，加 hashtag\n' +
+    'Instagram 視覺版：200~280字，爆款感強，用 emoji 製造視覺層次，讓人看完想打卡拍照，加 hashtag\n' +
+    'Threads 觀點版：120~160字，一句讓人想轉發的金句開頭，引發共鳴，加 hashtag\n\n' +
+    '所有文案共同結尾加：#DearYuFlower #友熙花苑 #鈔票花束 #有錢花\n\n' +
+    '只回傳以下格式的 JSON，不加任何說明或markdown：\n' +
+    '{"fb":"...","ig":"...","th":"..."}';
+
+  try {
+    var res = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + apiKey,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: userPrompt }] }],
+          generationConfig: { temperature: 0.92, maxOutputTokens: 2048 }
+        })
+      }
+    );
+
+    var data = await res.json();
+
+    if (data.error) {
+      if (data.error.code === 429) throw new Error('頻率限制，請等 60 秒後再試');
+      if (data.error.code === 400 || data.error.code === 403) throw new Error('API Key 無效，請重新申請確認沒有多餘空格');
+      throw new Error(data.error.message);
+    }
+
+    var raw = '';
+    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+      raw = data.candidates[0].content.parts[0].text;
+    }
+
+    var parsed;
+    try {
+      parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    } catch(e) {
+      parsed = { fb: raw, ig: raw, th: raw };
+    }
+
+    typewrite('fbContent', parsed.fb || '生成失敗，請重試。');
+    typewrite('igContent', parsed.ig || '生成失敗，請重試。');
+    typewrite('thContent', parsed.th || '生成失敗，請重試。');
+    showToast('✦ 三平台文案生成完成！');
+
+  } catch(err) {
+    ['fbContent', 'igContent', 'thContent'].forEach(function(id) {
+      document.getElementById(id).innerHTML = '<div class="out-text" style="color:#e57373;">⚠️ ' + err.message + '</div>';
+    });
+    showToast('❌ 生成失敗，請確認 API Key');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function copyCol(platform) {
+  var map = { fb: 'fbContent', ig: 'igContent', th: 'thContent' };
+  var bmap = { fb: 'copyFb', ig: 'copyIg', th: 'copyTh' };
+  var text = document.getElementById(map[platform]).innerText;
+  if (!text || text.indexOf('點擊左側') >= 0) { showToast('尚無內容可複製'); return; }
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.getElementById(bmap[platform]);
+    var orig = btn.textContent;
+    btn.textContent = '已複製 ✓';
+    btn.classList.add('ok');
+    setTimeout(function() { btn.textContent = orig; btn.classList.remove('ok'); }, 1800);
+    showToast('已複製到剪貼簿 ✓');
+  });
+}
+</script>
+</body>
+</html>
